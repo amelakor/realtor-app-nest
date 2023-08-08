@@ -9,3 +9,56 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Home {
+  id        Int      @id @default(autoincrement())
+  address   String
+  number_of_bedrooms Int
+  number_of_bathrooms Int
+  city String
+  listed_date DateTime @default(now())
+  square_footage Int
+  price Float
+  image_url String
+  type PropertyType
+  description String
+  latitude Float
+  longitude Float
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Image {
+  id Int @id @default(autoincrement())
+  url String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  email String @unique
+  password String
+  name String
+  phone String
+  image_url String
+  type UserType
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Message {
+  id Int @id @default(autoincrement())
+  message String
+}
+
+enum UserType {
+  REALTOR
+  BUYER
+  ADMIN
+}
+
+enum PropertyType {
+  RESIDENTIAL
+  CONDO
+}
