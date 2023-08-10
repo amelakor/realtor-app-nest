@@ -43,7 +43,7 @@ model User {
   password   String
   name       String
   phone      String
-  image_url  String
+  image_url  String?
   type       UserType
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

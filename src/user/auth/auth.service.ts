@@ -1,5 +1,8 @@
 import { Injectable, ConflictException } from '@nestjs/common';
+import * as bcrypt from 'bcryptjs';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UserType } from '@prisma/client';
+import * as jwt from 'jsonwebtoken';
 
 interface SignupParams {
   email: string;
@@ -20,7 +23,31 @@ export class AuthService {
       throw new ConflictException();
     }
 
-    return 'This action returns all cats';
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await this.prisamService.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name,
+        phone,
+        type: UserType.BUYER,
+        image_url: 'https://i.imgur.com/5FJXZ8u.png',
+      },
+    });
+
+    const token = await jwt.sign(
+      {
+        name,
+        id: user.id,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: '7d',
+      },
+    );
+
+    return { token };
   }
   login() {
     return 'This action returns all cats';
