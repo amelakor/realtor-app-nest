@@ -24,3 +24,11 @@ export class SignupDto {
   })
   phone: string;
 }
+
+export class SigninDto {
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  password: string;
+}

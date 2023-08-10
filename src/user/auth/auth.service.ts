@@ -1,4 +1,4 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, HttpException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserType } from '@prisma/client';
@@ -11,6 +11,11 @@ interface SignupParams {
   phone: string;
 }
 
+interface SigninParams {
+  email: string;
+  password: string;
+}
+
 @Injectable()
 export class AuthService {
   constructor(private readonly prisamService: PrismaService) {}
@@ -20,7 +25,7 @@ export class AuthService {
     });
 
     if (userExists) {
-      throw new ConflictException();
+      throw new HttpException('User already exists', 400);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -49,7 +54,34 @@ export class AuthService {
 
     return { token };
   }
-  login() {
-    return 'This action returns all cats';
+  async signin({ email, password }: SigninParams) {
+    const user = await this.prisamService.user.findUnique({
+      where: { email },
+    });
+
+    console.log(user, email, password, 'user');
+
+    if (!user) {
+      throw new HttpException('Invalid credentials', 400);
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatch) {
+      throw new HttpException('Invalid credentials', 400);
+    }
+
+    const token = await jwt.sign(
+      {
+        name: user.name,
+        id: user.id,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: '7d',
+      },
+    );
+
+    return { token };
   }
 }
