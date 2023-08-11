@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, HttpException } from '@nestjs/common';
+import { Injectable, HttpException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserType } from '@prisma/client';
@@ -18,9 +18,12 @@ interface SigninParams {
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisamService: PrismaService) {}
-  async signup({ email, password, name, phone }: SignupParams) {
-    const userExists = await this.prisamService.user.findUnique({
+  constructor(private readonly prismaService: PrismaService) {}
+  async signup(
+    { email, password, name, phone }: SignupParams,
+    userType: UserType,
+  ) {
+    const userExists = await this.prismaService.user.findUnique({
       where: { email },
     });
 
@@ -30,14 +33,13 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await this.prisamService.user.create({
+    const user = await this.prismaService.user.create({
       data: {
         email,
         password: hashedPassword,
         name,
         phone,
-        type: UserType.BUYER,
-        image_url: 'https://i.imgur.com/5FJXZ8u.png',
+        user_type: userType,
       },
     });
 
@@ -55,7 +57,7 @@ export class AuthService {
     return { token };
   }
   async signin({ email, password }: SigninParams) {
-    const user = await this.prisamService.user.findUnique({
+    const user = await this.prismaService.user.findUnique({
       where: { email },
     });
 
@@ -83,5 +85,11 @@ export class AuthService {
     );
 
     return { token };
+  }
+
+  generateProductKey(email: string, userType: UserType) {
+    const string = `${email}-${userType}-${process.env.PRODUCT_KEY_SECRET}`;
+
+    return bcrypt.hash(string, 10);
   }
 }
